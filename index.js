@@ -24,7 +24,7 @@ module.exports = (function () {
       service.stdout.setEncoding('utf8');
       service.stdout.pipe(process.stdout);
       service.stderr.setEncoding('utf8');
-      service.stderr.pipe(process.stdout);
+      service.stderr.pipe(process.stderr);
 
       service.stdout.on('data', function (data) {
         console.log(data.trim());
