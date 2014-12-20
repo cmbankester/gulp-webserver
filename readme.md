@@ -1,69 +1,73 @@
-# Gulp plugin for express
+# Gulp plugin to run a webserver
 
-## Description
-This plugin is simple using a child process to let you run node command, thus, it can start your customized server you have.
-The most commonly usage might be like this:
+A simple script to handle starting/restarting a node webserver.
 
-*Issues with the output should be reported on the gulp-express [issue tracker](https://github.com/gimm/gulp-express/issues).*
+Based heavily off of the development by [gimm](https://github.com/gimm) on
+[gulp-express](https://github.com/gimm/gulp-express)
 
 ## Install
 
 ```bash
-$ npm install --save-dev gulp-express
+$ npm install --save-dev gulp-webserver
 ```
 
 ## Usage
 
+`Gulpfile.js`:
 ```js
-// gulpfile.js
+var main_file = require('./package.json').main;
 var gulp = require('gulp');
-var server = require('gulp-express');
+var server = require('gulp-webserver');
+
+gulp.task('prepare-server', function(cb){
+  // Server preparation stuff like asset compilation/copying
+  ...
+  cb()
+});
 
 gulp.task('server', function () {
-    // Start the server at the beginning of the task
+    // Starts/restarts the server
     server.run({
-        file: 'app.js'
+        file: main_file
     });
-    
-    // Restart the server when file changes
-    gulp.watch(['app/**/*.html'], server.notify);
-    gulp.watch(['app/styles/**/*.scss'], ['styles:scss']);
-    gulp.watch(['{.tmp,app}/styles/**/*.css'], ['styles:css', server.notify]);
-    gulp.watch(['app/scripts/**/*.js'], ['jshint']);
-    gulp.watch(['app/images/**/*'], server.notify);
-    gulp.watch(['app.js', 'routes/**/*.js'], [server.run]);
+});
+
+gulp.task('default', ['prepare-server', 'server'], function(){
+  // Restart the server when file changes
+  gulp.watch(['some', 'files'], ['prepare-server']);
+  gulp.watch(['app/**/*.js'], ['server']);
 });
 ```
+
+`path/to/main/file.js`
 ```js
-// app.js
-var express = require('express');
-var app = module.exports.app = exports.app = express();
-app.use(require('connect-livereload')());
+// e.g. express/hapi/koa/etc.
+var server    = require('some/web/server.js');
+
+// set up your server (routes, process-setup, etc.)
+...
+
+// start your server
+server.start();
+
+// export the server if you need access to it elsewhere
+module.exports = server;
 ```
 
 ## API
 
 ### server.run([options])
-Run or re-run the script file, which will create a server, a express server in most of the case, probably.
+Starts / restarts the server
+
 Returns a [ChildProcess](http://nodejs.org/api/child_process.html#child_process_class_childprocess) instance of spawned server.
 
 #### options
 Type: `Object`
 
-Options to pass to gulp-express:
-* `env` NONE_ENV value of child process. Default: `'development'`.
-* `file` Application entry point file. Default: `'app.js'`.
-* `port` LiveReload server port. Default: `35729`.
-* `args` Arguments array to pass to `node` process. For example: `['--debug']`. Empty by default.
+Options to pass to gulp-webserver:
+* `file` Application entry point file. Default: `'index.js'`.
+* `args` Arguments array to pass to `node` process. For example: `['--debug']`.
+Default: `[]`
 
 ### server.stop()
-Stop the instantiated spawned server programmatically. Useful to run acceptance tests during CI process.
-
-### server.notify(event)
-Send a notification to the livereload server in order to trigger a reload on page.
-
-#### event
-Type: `Object`
-
-Event object that is normally passed to [gulp.watch](https://github.com/gulpjs/gulp/blob/master/docs/API.md#cbevent) callback.
-Should contain `path` property with changed file path.
+Just calls `server.kill()` (See [ChildProcess#kill](http://nodejs.org/api/child_process.html#child_process_child_kill_signal))
