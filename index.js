@@ -26,12 +26,6 @@ module.exports = (function () {
       service.stderr.setEncoding('utf8');
       service.stderr.pipe(process.stderr);
 
-      service.stdout.on('data', function (data) {
-        console.log(data.trim());
-      });
-      service.stderr.on('data', function (data) {
-        console.log(data.trim());
-      });
       process.on('exit', function (code, sig) {
         service.kill();
       });
