@@ -6,7 +6,8 @@ var child_process = require('child_process'),
 
 
 module.exports = (function () {
-  var server_file = undefined,
+  var service     = undefined,
+      server_file = undefined,
       args        = undefined;
 
   return {
