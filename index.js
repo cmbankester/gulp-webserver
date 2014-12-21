@@ -8,33 +8,55 @@ var child_process = require('child_process'),
 module.exports = (function () {
   var service     = undefined,
       server_file = undefined,
-      args        = undefined;
+      node_args   = undefined;
 
   return {
     run: function (opts) {
-      args = opts.args || default_opts.args;
-      args.push(opts.file || default_opts.file);
+      node_args = opts.args || default_opts.args;
+      node_args.push(opts.file || default_opts.file);
 
       if (service) { // Stop
-        service.kill('SIGKILL');
+        service.kill('SIGINT');
         service = undefined;
       }
 
-      service = child_process.spawn('node', args);
+      service = child_process.spawn('node', node_args);
       service.stdout.setEncoding('utf8');
       service.stdout.pipe(process.stdout);
       service.stderr.setEncoding('utf8');
       service.stderr.pipe(process.stderr);
 
-      process.on('exit', function (code, sig) {
-        service.kill();
+      // Intercept ctrl+c and pass it to the service instead of letting it kill
+      // process. That way, any cleanup that the service needs to perform can
+      // log to stdout if necessary (process won't die until after service tells
+      // it that it's dying)
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      process.stdin.setRawMode(true);
+      process.stdin.on('data', function(char) {
+        if (char == '\3') {
+          service.kill('SIGINT');
+          service = undefined;
+        } else {
+          process.stdout.write(char);
+        }
+      });
+
+      service.on('exit', function(){
+        process.exit(0);
+      });
+
+      process.on('exit', function (){
+        if (service) {
+          service.kill();
+        }
       });
 
       return service;
     },
     stop: function () {
       if (service) {
-        service.kill('SIGKILL');
+        service.kill('SIGINT');
         service = undefined;
       }
     }
