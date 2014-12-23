@@ -1,6 +1,5 @@
 var child_process = require('child_process');
 
-
 module.exports = (function () {
   var service;
   var restarting;
@@ -16,8 +15,6 @@ module.exports = (function () {
     if (char == '\3') {
       service.kill('SIGINT');
       service = undefined;
-    } else {
-      process.stdout.write(char);
     }
   });
 
