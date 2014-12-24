@@ -19,10 +19,15 @@ var main_file = require('./package.json').main;
 var gulp = require('gulp');
 var server = require('gulp-webserver');
 
-gulp.task('prepare-server', function(cb){
+gulp.task('do-asset-stuff', function(cb){
   // Server preparation stuff like asset compilation/copying
   ...
   cb()
+});
+
+gulp.task('prepare-server', function () {
+  // Sets up process event listening
+  server.prepare();
 });
 
 gulp.task('server', function () {
@@ -32,14 +37,14 @@ gulp.task('server', function () {
     });
 });
 
-gulp.task('default', ['prepare-server', 'server'], function(){
+gulp.task('default', ['do-asset-stuff', 'prepare-server', 'server'], function(){
   // Restart the server when file changes
-  gulp.watch(['some', 'files'], ['prepare-server']);
+  gulp.watch(['some', 'files'], ['do-asset-stuff']);
   gulp.watch(['app/**/*.js'], ['server']);
 });
 ```
 
-`path/to/main/file.js`
+`path/to/main/file.js`:
 ```js
 // e.g. express/hapi/koa/etc.
 var server    = require('some/web/server.js');
